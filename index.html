@@ -109,7 +109,7 @@
         .camera-container {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 400px;
             background: var(--dark);
             border-radius: 15px;
             overflow: hidden;
@@ -134,6 +134,24 @@
             align-items: center;
             background: rgba(0,0,0,0.5);
             color: white;
+        }
+        
+        .scan-area {
+            width: 90%;
+            height: 80%;
+            border: 3px solid var(--accent);
+            border-radius: 15px;
+            position: relative;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .scan-text {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
         }
         
         .camera-controls {
@@ -202,25 +220,10 @@
             animation: fadeInUp 0.5s ease;
         }
         
-        .employee-photo {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid var(--primary);
-            margin: 0 auto 15px;
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            color: var(--primary);
-        }
-        
         .captured-id {
             width: 100%;
-            max-width: 300px;
-            height: 180px;
+            max-width: 350px;
+            height: 220px;
             border-radius: 10px;
             object-fit: cover;
             border: 2px solid var(--primary);
@@ -319,8 +322,8 @@
         .admin-content {
             background: white;
             border-radius: 15px;
-            width: 90%;
-            max-width: 800px;
+            width: 95%;
+            max-width: 900px;
             max-height: 90vh;
             overflow: hidden;
             display: flex;
@@ -385,8 +388,8 @@
         }
         
         .id-photo {
-            width: 60px;
-            height: 40px;
+            width: 80px;
+            height: 50px;
             object-fit: cover;
             border-radius: 5px;
             border: 1px solid #ddd;
@@ -470,6 +473,16 @@
             }
         }
         
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
         /* التكيف مع الأجهزة المحمولة */
         @media (max-width: 480px) {
             .container {
@@ -490,7 +503,12 @@
             }
             
             .camera-container {
-                height: 250px;
+                height: 350px;
+            }
+            
+            .scan-area {
+                width: 95%;
+                height: 85%;
             }
             
             .employee-card {
@@ -498,24 +516,13 @@
                 padding: 15px;
             }
             
-            .employee-photo {
-                width: 100px;
-                height: 100px;
-                font-size: 35px;
-            }
-            
             .employee-name {
                 font-size: 20px;
             }
-        }
-
-        .capture-section {
-            text-align: center;
-            margin: 15px 0;
-        }
-
-        .capture-btn {
-            margin: 10px;
+            
+            .captured-id {
+                height: 180px;
+            }
         }
     </style>
 </head>
@@ -540,14 +547,14 @@
     <div class="admin-panel" id="adminPanel">
         <div class="admin-content">
             <div class="admin-header">
-                <div class="admin-title">لوحة تحكم المسؤول</div>
+                <div class="admin-title">لوحة تحكم المسؤول - سجلات الحضور</div>
                 <button class="close-admin" id="closeAdmin">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="admin-body">
                 <div class="search-box">
-                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 ابحث باسم الموظف...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 ابحث باسم الموظف أو رقم الهوية...">
                 </div>
                 <table class="attendance-table">
                     <thead>
@@ -555,6 +562,7 @@
                             <th>صورة الهوية</th>
                             <th>الاسم</th>
                             <th>رقم الهوية</th>
+                            <th>القسم</th>
                             <th>الوقت</th>
                             <th>التاريخ</th>
                             <th>الحالة</th>
@@ -581,8 +589,8 @@
         
         <!-- الوقت والتاريخ -->
         <div class="datetime-section">
-            <div class="time" id="currentTime">10:44</div>
-            <div class="date" id="currentDate">الأحد 2024/11/16</div>
+            <div class="time" id="currentTime">--:--</div>
+            <div class="date" id="currentDate">--/--/----</div>
         </div>
         
         <!-- الرسائل -->
@@ -595,8 +603,13 @@
             <div class="camera-container">
                 <video id="cameraFeed" autoplay playsinline></video>
                 <div class="camera-overlay" id="cameraOverlay">
-                    <i class="fas fa-camera" style="font-size: 48px; margin-bottom: 15px;"></i>
-                    <div>انقر لبدء الكاميرا</div>
+                    <div class="scan-area pulse">
+                        <div class="scan-text">
+                            <i class="fas fa-id-card" style="font-size: 48px; margin-bottom: 15px;"></i>
+                            <div>وجه الهوية نحو الكاميرا</div>
+                            <div style="font-size: 14px; margin-top: 10px; opacity: 0.8;">سيتم القراءة تلقائياً</div>
+                        </div>
+                    </div>
                 </div>
                 <canvas id="captureCanvas" style="display: none;"></canvas>
             </div>
@@ -606,7 +619,7 @@
                     <i class="fas fa-camera"></i> تشغيل الكاميرا
                 </button>
                 <button class="btn btn-success" id="captureBtn" style="display: none;">
-                    <i class="fas fa-camera-retro"></i> التقاط صورة الهوية
+                    <i class="fas fa-camera-retro"></i> التقاط الهوية
                 </button>
                 <button class="btn btn-secondary" id="stopCamera" style="display: none;">
                     <i class="fas fa-stop"></i> إيقاف الكاميرا
@@ -617,9 +630,6 @@
         <!-- بطاقة الموظف -->
         <div class="employee-card" id="employeeCard">
             <img id="capturedId" class="captured-id" alt="صورة الهوية">
-            <div class="employee-photo" id="employeePhoto">
-                <i class="fas fa-user"></i>
-            </div>
             <div class="employee-name" id="employeeName">-</div>
             <div class="employee-position" id="employeePosition">-</div>
             <div class="employee-details">
@@ -648,7 +658,7 @@
     </div>
 
     <script>
-        // بيانات المسؤولين
+        // بيانات المسؤولين فقط
         const admins = {
             "admin": "admin123",
             "مسؤول": "password"
@@ -672,7 +682,6 @@
         const captureBtn = document.getElementById('captureBtn');
         const stopCameraBtn = document.getElementById('stopCamera');
         const employeeCard = document.getElementById('employeeCard');
-        const employeePhoto = document.getElementById('employeePhoto');
         const employeeName = document.getElementById('employeeName');
         const employeePosition = document.getElementById('employeePosition');
         const employeeId = document.getElementById('employeeId');
@@ -688,6 +697,7 @@
         let isCameraActive = false;
         let currentEmployee = null;
         let capturedImage = null;
+        let autoCaptureInterval = null;
 
         // API Key للذكاء الاصطناعي
         const GOOGLE_VISION_API_KEY = 'AIzaSyBewzM4KVeKAxqBUMzGVkw_XnduLjk8Bus';
@@ -755,8 +765,8 @@
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "environment",
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     } 
                 });
                 
@@ -767,7 +777,10 @@
                 stopCameraBtn.style.display = 'flex';
                 isCameraActive = true;
                 
-                infoMessage.textContent = 'قم بتصويب الكاميرا نحو الهوية واضغط على "التقاط صورة الهوية"';
+                infoMessage.textContent = 'الكاميرا جاهزة - وجه الهوية نحو الكاميرا';
+                
+                // بدء التقاط تلقائي كل 3 ثواني
+                startAutoCapture();
                 
             } catch (err) {
                 console.error('خطأ في تشغيل الكاميرا:', err);
@@ -776,10 +789,22 @@
             }
         }
 
+        // بدء التقاط تلقائي
+        function startAutoCapture() {
+            autoCaptureInterval = setInterval(() => {
+                if (isCameraActive && !currentEmployee) {
+                    captureID();
+                }
+            }, 3000);
+        }
+
         // إيقاف الكاميرا
         function stopCamera() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
+            }
+            if (autoCaptureInterval) {
+                clearInterval(autoCaptureInterval);
             }
             cameraOverlay.style.display = 'flex';
             startCameraBtn.style.display = 'flex';
@@ -803,7 +828,9 @@
             capturedImage = captureCanvas.toDataURL('image/jpeg');
             capturedId.src = capturedImage;
             capturedId.style.display = 'block';
-            employeePhoto.style.display = 'none';
+            
+            infoMessage.textContent = 'جاري تحليل الهوية...';
+            infoMessage.className = 'message info';
             
             // تحليل الصورة باستخدام الذكاء الاصطناعي
             analyzeImage(capturedImage);
@@ -812,9 +839,6 @@
         // تحليل الصورة باستخدام Google Vision API
         async function analyzeImage(imageData) {
             try {
-                infoMessage.textContent = 'جاري تحليل الهوية...';
-                infoMessage.className = 'message info';
-                
                 // تحويل base64 إلى Blob
                 const response = await fetch(imageData);
                 const blob = await response.blob();
@@ -859,11 +883,9 @@
                 
             } catch (error) {
                 console.error('خطأ في تحليل الصورة:', error);
-                infoMessage.textContent = 'خطأ في قراءة الهوية - حاول مرة أخرى';
-                infoMessage.className = 'message error';
+                infoMessage.textContent = 'جاري محاولة قراءة الهوية...';
                 
-                // استخدام بيانات تجريبية للاختبار
-                simulateExtractedText();
+                // في حالة الخطأ، ننتظر المحاولة التالية
             }
         }
 
@@ -877,67 +899,54 @@
                 name: '',
                 id: '',
                 mobile: '',
-                department: ''
+                department: 'الخدمات اللوجستية',
+                position: 'موظف'
             };
             
-            // البحث عن رقم الهوية (عادةً أرقام فقط)
-            const idMatch = text.match(/\b\d{9,10}\b/);
+            // البحث عن رقم الهوية (أرقام فقط)
+            const idMatch = text.match(/\b\d{5,15}\b/g);
             if (idMatch) {
                 extractedData.id = idMatch[0];
             }
             
-            // البحث عن رقم الجوال
-            const mobileMatch = text.match(/(?:\+?966|0)?5[0-9]{8}/);
+            // البحث عن رقم الجوال السعودي
+            const mobileMatch = text.match(/(?:\+?966|0)?5[0-9]{8}/g);
             if (mobileMatch) {
                 extractedData.mobile = mobileMatch[0];
             }
             
-            // البحث عن الاسم (عادةً في السطور الأولى)
-            for (let i = 0; i < Math.min(3, lines.length); i++) {
+            // البحث عن الاسم (سطور تحتوي على أحرف عربية)
+            for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (line && !line.match(/\d/) && line.length > 3) {
+                if (line && line.match(/[\u0600-\u06FF]/) && line.length > 5 && !line.match(/\d/)) {
                     extractedData.name = line;
                     break;
                 }
             }
             
-            // إذا لم نتمكن من استخراج البيانات، نستخدم البيانات التجريبية
-            if (!extractedData.name || !extractedData.id) {
-                simulateExtractedText();
-                return;
+            // إذا تم استخراج البيانات الأساسية، نعرضها
+            if (extractedData.name && extractedData.id) {
+                displayEmployeeInfo(extractedData);
             }
-            
-            // عرض البيانات المستخرجة
-            displayEmployeeInfo(extractedData);
-        }
-
-        // محاكاة البيانات المستخرجة (للتجربة)
-        function simulateExtractedText() {
-            const sampleData = {
-                name: "مهند مرغني",
-                id: "106",
-                mobile: "+966507539702",
-                department: "الإدارة",
-                position: "مشرف التسجيل"
-            };
-            
-            displayEmployeeInfo(sampleData);
         }
 
         // عرض بيانات الموظف
         function displayEmployeeInfo(employeeData) {
             currentEmployee = employeeData;
             employeeName.textContent = employeeData.name;
-            employeePosition.textContent = employeeData.position || "موظف";
+            employeePosition.textContent = employeeData.position;
             employeeId.textContent = employeeData.id;
-            employeeMobile.textContent = employeeData.mobile;
+            employeeMobile.textContent = employeeData.mobile || 'غير متوفر';
             employeeDepartment.textContent = employeeData.department;
             
             employeeCard.classList.add('active');
-            infoMessage.textContent = 'تم قراءة الهوية بنجاح - يرجى التأكد من البيانات';
+            infoMessage.textContent = 'تم قراءة الهوية بنجاح';
             infoMessage.className = 'message success';
             
-            stopCamera();
+            // إيقاف التقاط التلقائي
+            if (autoCaptureInterval) {
+                clearInterval(autoCaptureInterval);
+            }
         }
 
         // إلغاء العملية
@@ -945,7 +954,6 @@
             employeeCard.classList.remove('active');
             currentEmployee = null;
             capturedId.style.display = 'none';
-            employeePhoto.style.display = 'flex';
             startCamera();
         });
 
@@ -965,7 +973,7 @@
             // حفظ في localStorage
             const record = {
                 name: employee.name,
-                position: employee.position || "موظف",
+                position: employee.position,
                 department: employee.department,
                 id: employee.id,
                 mobile: employee.mobile,
@@ -987,10 +995,14 @@
             employeeCard.classList.remove('active');
             currentEmployee = null;
             capturedId.style.display = 'none';
-            employeePhoto.style.display = 'flex';
             
             // تحديث لوحة التحكم
             updateAdminPanel();
+            
+            // إعادة تشغيل الكاميرا بعد 3 ثواني
+            setTimeout(() => {
+                startCamera();
+            }, 3000);
         }
 
         // تحديث لوحة التحكم
@@ -998,17 +1010,30 @@
             const records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
             attendanceRecords.innerHTML = '';
             
+            if (records.length === 0) {
+                attendanceRecords.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <div>لا توجد سجلات حضور حتى الآن</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
             records.forEach(record => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>
                         ${record.idPhoto ? 
-                            `<img src="${record.idPhoto}" class="id-photo" alt="صورة الهوية">` : 
-                            'لا توجد صورة'
+                            `<img src="${record.idPhoto}" class="id-photo" alt="صورة الهوية" onclick="this.style.transform='scale(3)'; setTimeout(() => this.style.transform='scale(1)', 2000)">` : 
+                            '<span style="color: #666;">لا توجد صورة</span>'
                         }
                     </td>
                     <td>${record.name}</td>
                     <td>${record.id}</td>
+                    <td>${record.department}</td>
                     <td>${record.time}</td>
                     <td>${record.date}</td>
                     <td><span class="status present">حاضر</span></td>
@@ -1024,7 +1049,8 @@
             
             rows.forEach(row => {
                 const name = row.cells[1].textContent.toLowerCase();
-                if (name.includes(searchTerm)) {
+                const id = row.cells[2].textContent.toLowerCase();
+                if (name.includes(searchTerm) || id.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
