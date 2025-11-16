@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام تسجيل الحضور والانصراف</title>
+    <title>نظام الحضور والانصراف - الزهراني</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -12,336 +14,707 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
+        :root {
+            --primary: #1e3c72;
+            --secondary: #2a5298;
+            --accent: #4a90e2;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        
         body {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--dark);
             direction: rtl;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 20px;
         }
         
         .container {
-            width: 100%;
-            max-width: 400px;
+            max-width: 500px;
+            margin: 0 auto;
             background: white;
             border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            color: #333;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .date-time {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #2a5298;
-        }
-        
-        .date {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 30px;
-        }
-        
-        .fingerprint-section {
-            background: #f8f9fa;
-            border: 3px dashed #dee2e6;
-            border-radius: 50%;
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
         
-        .fingerprint-section.scanning {
-            border-color: #2a5298;
-            background: #e3f2fd;
-            animation: pulse 2s infinite;
+        /* الهيدر */
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
         }
         
-        .fingerprint-icon {
-            font-size: 64px;
-            color: #2a5298;
-            margin-bottom: 10px;
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
         
-        .camera-feed {
+        .sub-logo {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .admin-login {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-login:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* قسم الوقت والتاريخ */
+        .datetime-section {
+            padding: 20px;
+            text-align: center;
+            background: var(--light);
+        }
+        
+        .time {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .date {
+            font-size: 16px;
+            color: var(--dark);
+            opacity: 0.8;
+        }
+        
+        /* قسم الكاميرا */
+        .camera-section {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .camera-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background: var(--dark);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        #cameraFeed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .camera-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-        
-        .scan-status {
-            text-align: center;
-            margin: 15px 0;
-            font-weight: 600;
-            color: #2a5298;
-            min-height: 24px;
-        }
-        
-        .keypad {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-top: 25px;
-        }
-        
-        .key {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 18px 5px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-        
-        .key:hover {
-            background: #f8f9fa;
-            border-color: #2a5298;
-        }
-        
-        .key.function {
-            background: #2a5298;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.5);
             color: white;
-            border-color: #2a5298;
         }
         
-        .key.function:hover {
-            background: #1e3c72;
-        }
-        
-        .admin-panel {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(255,255,255,0.95);
-            padding: 15px;
+        .scan-area {
+            width: 250px;
+            height: 150px;
+            border: 2px solid var(--accent);
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .scan-area::before, .scan-area::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent);
+        }
+        
+        .scan-area::before {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+        }
+        
+        .scan-area::after {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+        }
+        
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* بطاقة الموظف */
+        .employee-card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+            border: 2px solid #e9ecef;
             display: none;
         }
         
-        .admin-panel.active {
+        .employee-card.active {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        .employee-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary);
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--primary);
+        }
+        
+        .employee-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .employee-position {
+            color: var(--dark);
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .employee-details {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .detail-label {
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .detail-value {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        /* الرسائل */
+        .message {
+            padding: 15px;
+            margin: 15px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
             display: block;
         }
         
-        .admin-btn {
-            background: #2a5298;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-bottom: 10px;
-            width: 100%;
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
         }
         
-        .attendance-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 12px;
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
         }
         
-        .attendance-table th, .attendance-table td {
-            padding: 8px;
-            text-align: right;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        .attendance-table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #2a5298;
-        }
-        
-        .status {
-            padding: 4px 8px;
-            border-radius: 15px;
-            font-size: 10px;
-            font-weight: 500;
-        }
-        
-        .status.present {
-            background: #e6f7ee;
-            color: #00a65a;
-        }
-        
-        @keyframes pulse {
-            0% { 
-                box-shadow: 0 0 0 0 rgba(42, 82, 152, 0.4);
-                transform: scale(1);
-            }
-            50% { 
-                box-shadow: 0 0 0 15px rgba(42, 82, 152, 0);
-                transform: scale(1.05);
-            }
-            100% { 
-                box-shadow: 0 0 0 0 rgba(42, 82, 152, 0);
-                transform: scale(1);
-            }
-        }
-        
-        .camera-permission {
-            background: rgba(0,0,0,0.8);
+        /* لوحة التحكم */
+        .admin-panel {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex;
+            background: rgba(0,0,0,0.8);
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
         
-        .permission-box {
+        .admin-panel.active {
+            display: flex;
+        }
+        
+        .admin-content {
             background: white;
-            padding: 30px;
             border-radius: 15px;
-            text-align: center;
-            max-width: 400px;
-            margin: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
-        .permission-box h3 {
-            color: #2a5298;
-            margin-bottom: 15px;
-        }
-        
-        .permission-btn {
-            background: #2a5298;
+        .admin-header {
+            background: var(--primary);
             color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: between;
+            align-items: center;
         }
         
-        .hidden {
+        .admin-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .close-admin {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .admin-body {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .attendance-table th, .attendance-table td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .attendance-table th {
+            background: var(--light);
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status.present {
+            background: #e6f7ee;
+            color: var(--success);
+        }
+        
+        /* نافذة تسجيل الدخول */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
             display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .login-modal.active {
+            display: flex;
+        }
+        
+        .login-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .login-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+        
+        /* الأنيميشن */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* التكيف مع الأجهزة المحمولة */
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .logo {
+                font-size: 20px;
+            }
+            
+            .admin-login {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+            
+            .camera-container {
+                height: 250px;
+            }
+            
+            .scan-area {
+                width: 200px;
+                height: 120px;
+            }
+            
+            .employee-card {
+                margin: 15px;
+                padding: 15px;
+            }
+            
+            .employee-photo {
+                width: 100px;
+                height: 100px;
+                font-size: 35px;
+            }
+            
+            .employee-name {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- طلب إذن الكاميرا -->
-    <div class="camera-permission" id="cameraPermission">
-        <div class="permission-box">
-            <h3>تفعيل الكاميرا</h3>
-            <p>يحتاج النظام إلى الوصول للكاميرا لقراءة باركود الحضور</p>
-            <p>الرجاء الموافقة على استخدام الكاميرا عند ظهور نافذة الإذن</p>
-            <button class="permission-btn" id="allowCamera">موافق وتفعيل الكاميرا</button>
+    <!-- نافذة تسجيل الدخول -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-form">
+            <h2 class="login-title">تسجيل الدخول للمسؤول</h2>
+            <div class="form-group">
+                <input type="text" class="form-input" id="username" placeholder="اسم المستخدم">
+            </div>
+            <div class="form-group">
+                <input type="password" class="form-input" id="password" placeholder="كلمة المرور">
+            </div>
+            <button class="btn btn-primary" id="loginBtn" style="width: 100%;">
+                <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+            </button>
         </div>
     </div>
 
-    <!-- لوحة المسؤول -->
+    <!-- لوحة التحكم -->
     <div class="admin-panel" id="adminPanel">
-        <button class="admin-btn" id="toggleAdmin">إخفاء لوحة التحكم</button>
-        <div class="search-box">
-            <input type="text" placeholder="بحث باسم الموظف..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+        <div class="admin-content">
+            <div class="admin-header">
+                <div class="admin-title">لوحة تحكم المسؤول</div>
+                <button class="close-admin" id="closeAdmin">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="admin-body">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 ابحث باسم الموظف...">
+                </div>
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>الصورة</th>
+                            <th>الاسم</th>
+                            <th>رقم الهوية</th>
+                            <th>الوقت</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceRecords">
+                        <!-- سيتم ملء البيانات من خلال الجافاسكريبت -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <table class="attendance-table">
-            <thead>
-                <tr>
-                    <th>الاسم</th>
-                    <th>الوقت</th>
-                    <th>التاريخ</th>
-                    <th>الحالة</th>
-                </tr>
-            </thead>
-            <tbody id="attendanceRecords">
-                <!-- سيتم ملء البيانات من خلال الجافاسكريبت -->
-            </tbody>
-        </table>
     </div>
 
     <!-- الواجهة الرئيسية -->
     <div class="container">
+        <!-- الهيدر -->
         <div class="header">
-            <div class="date-time" id="currentTime">10:44</div>
-            <div class="date" id="currentDate">الأحد 2024/11/16</div>
-        </div>
-
-        <div class="fingerprint-section" id="barcodeScanner">
-            <div class="fingerprint-icon">👆</div>
-            <video class="camera-feed" id="cameraFeed" muted playsinline></video>
+            <button class="admin-login" id="adminLoginBtn">
+                <i class="fas fa-user-cog"></i> مسؤول
+            </button>
+            <div class="logo">نظام الحضور والانصراف</div>
+            <div class="sub-logo">الزهراني للخدمات اللوجستية</div>
         </div>
         
-        <div class="scan-status" id="scanStatus">جاري تفعيل الكاميرا...</div>
-
-        <div class="keypad">
-            <div class="key function">F1</div>
-            <div class="key">3</div>
-            <div class="key">2</div>
-            <div class="key">1</div>
-            <div class="key function">F2</div>
-            <div class="key">6</div>
-            <div class="key">5</div>
-            <div class="key">4</div>
-            <div class="key function">F3</div>
-            <div class="key">9</div>
-            <div class="key">8</div>
-            <div class="key">7</div>
-            <div class="key function">F4</div>
-            <div class="key">إدخال</div>
-            <div class="key">مسح</div>
-            <div class="key">0</div>
+        <!-- الوقت والتاريخ -->
+        <div class="datetime-section">
+            <div class="time" id="currentTime">10:44</div>
+            <div class="date" id="currentDate">الأحد 2024/11/16</div>
+        </div>
+        
+        <!-- الرسائل -->
+        <div class="message info" id="infoMessage">
+            <i class="fas fa-info-circle"></i> قم بتوجيه كاميرا الهاتف نحو باركود الهوية
+        </div>
+        
+        <!-- قسم الكاميرا -->
+        <div class="camera-section">
+            <div class="camera-container">
+                <video id="cameraFeed" autoplay playsinline></video>
+                <div class="camera-overlay" id="cameraOverlay">
+                    <div class="scan-area pulse"></div>
+                    <div>ضع باركود الهوية داخل الإطار</div>
+                </div>
+            </div>
+            
+            <div class="camera-controls">
+                <button class="btn btn-primary" id="startCamera">
+                    <i class="fas fa-camera"></i> تشغيل الكاميرا
+                </button>
+                <button class="btn btn-secondary" id="stopCamera" style="display: none;">
+                    <i class="fas fa-stop"></i> إيقاف الكاميرا
+                </button>
+            </div>
+        </div>
+        
+        <!-- بطاقة الموظف -->
+        <div class="employee-card" id="employeeCard">
+            <div class="employee-photo" id="employeePhoto">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="employee-name" id="employeeName">-</div>
+            <div class="employee-position" id="employeePosition">-</div>
+            <div class="employee-details">
+                <div class="detail-row">
+                    <span class="detail-label">رقم الهوية:</span>
+                    <span class="detail-value" id="employeeId">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">رقم الجوال:</span>
+                    <span class="detail-value" id="employeeMobile">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">القسم:</span>
+                    <span class="detail-value" id="employeeDepartment">-</span>
+                </div>
+            </div>
+            <div class="camera-controls" style="margin-top: 20px;">
+                <button class="btn btn-secondary" id="cancelBtn">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+                <button class="btn btn-success" id="confirmBtn">
+                    <i class="fas fa-check"></i> تأكيد الحضور
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        // بيانات الموظفين المخزنة في الباركود
-        const employeeData = {
-            "EMP001": { name: "أحمد محمد", department: "الإدارة" },
-            "EMP002": { name: "فاطمة علي", department: "الشؤون الإدارية" },
-            "EMP003": { name: "خالد إبراهيم", department: "تقنية المعلومات" },
-            "EMP004": { name: "نورة سعد", department: "المحاسبة" },
-            "EMP005": { name: "سالم عبدالله", department: "المبيعات" },
-            "EMP006": { name: "لمياء حسن", department: "خدمة العملاء" }
+        // بيانات المسؤولين
+        const admins = {
+            "admin": "admin123",
+            "مسؤول": "password"
+        };
+
+        // بيانات الموظفين (سيتم ملؤها من الباركود)
+        const employees = {
+            "106": {
+                name: "مهند مرغني",
+                position: "مشرف التسجيل",
+                department: "الإدارة",
+                mobile: "+966 50 753 9702",
+                id: "106",
+                photo: "👨‍💼"
+            }
         };
 
         // عناصر DOM
-        const cameraPermission = document.getElementById('cameraPermission');
-        const allowCameraBtn = document.getElementById('allowCamera');
-        const barcodeScanner = document.getElementById('barcodeScanner');
-        const cameraFeed = document.getElementById('cameraFeed');
-        const scanStatus = document.getElementById('scanStatus');
+        const loginModal = document.getElementById('loginModal');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const closeAdmin = document.getElementById('closeAdmin');
+        const loginBtn = document.getElementById('loginBtn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
         const currentTime = document.getElementById('currentTime');
         const currentDate = document.getElementById('currentDate');
-        const adminPanel = document.getElementById('adminPanel');
-        const toggleAdminBtn = document.getElementById('toggleAdmin');
+        const cameraFeed = document.getElementById('cameraFeed');
+        const cameraOverlay = document.getElementById('cameraOverlay');
+        const startCameraBtn = document.getElementById('startCamera');
+        const stopCameraBtn = document.getElementById('stopCamera');
+        const employeeCard = document.getElementById('employeeCard');
+        const employeePhoto = document.getElementById('employeePhoto');
+        const employeeName = document.getElementById('employeeName');
+        const employeePosition = document.getElementById('employeePosition');
+        const employeeId = document.getElementById('employeeId');
+        const employeeMobile = document.getElementById('employeeMobile');
+        const employeeDepartment = document.getElementById('employeeDepartment');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const infoMessage = document.getElementById('infoMessage');
         const attendanceRecords = document.getElementById('attendanceRecords');
+        const searchInput = document.getElementById('searchInput');
 
         let stream = null;
         let isScanning = false;
-        let scanAttempts = 0;
-        const maxScanAttempts = 10;
+        let currentEmployee = null;
+        let quaggaInitialized = false;
 
         // تحديث الوقت والتاريخ
         function updateDateTime() {
@@ -356,28 +729,48 @@
         setInterval(updateDateTime, 1000);
         updateDateTime();
 
-        // طلب إذن الكاميرا
-        allowCameraBtn.addEventListener('click', async function() {
+        // فتح نافذة تسجيل الدخول
+        adminLoginBtn.addEventListener('click', function() {
+            loginModal.classList.add('active');
+        });
+
+        // تسجيل الدخول
+        loginBtn.addEventListener('click', function() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (admins[username] && admins[username] === password) {
+                loginModal.classList.remove('active');
+                adminPanel.classList.add('active');
+                updateAdminPanel();
+                usernameInput.value = '';
+                passwordInput.value = '';
+            } else {
+                alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+            }
+        });
+
+        // إغلاق لوحة التحكم
+        closeAdmin.addEventListener('click', function() {
+            adminPanel.classList.remove('active');
+        });
+
+        // تشغيل الكاميرا
+        startCameraBtn.addEventListener('click', async function() {
             await startCamera();
         });
 
-        // بدء الكاميرا تلقائياً عند تحميل الصفحة
-        window.addEventListener('load', async function() {
-            // ننتظر ثانيتين ثم نطلب الكاميرا تلقائياً
-            setTimeout(async () => {
-                await startCamera();
-            }, 2000);
+        // إيقاف الكاميرا
+        stopCameraBtn.addEventListener('click', function() {
+            stopCamera();
         });
 
         // بدء تشغيل الكاميرا
         async function startCamera() {
             try {
-                scanStatus.textContent = 'جاري تشغيل الكاميرا...';
+                infoMessage.textContent = 'جاري تشغيل الكاميرا...';
+                infoMessage.className = 'message info';
                 
-                // إخفاء طلب الإذن
-                cameraPermission.classList.add('hidden');
-                
-                // طلب الوصول للكاميرا
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "environment",
@@ -387,81 +780,94 @@
                 });
                 
                 cameraFeed.srcObject = stream;
-                barcodeScanner.classList.add('scanning');
+                cameraOverlay.style.display = 'none';
+                startCameraBtn.style.display = 'none';
+                stopCameraBtn.style.display = 'flex';
                 isScanning = true;
                 
-                scanStatus.textContent = 'جاهز للمسح - ضع الباركود أمام الكاميرا';
+                infoMessage.textContent = 'جاري المسح ضوئياً - ضع باركود الهوية أمام الكاميرا';
                 
-                // بدء محاكاة المسح الضوئي
+                // بدء مسح الباركود
                 startBarcodeScanning();
                 
             } catch (err) {
-                console.error('خطأ في الوصول للكاميرا:', err);
-                scanStatus.textContent = 'خطأ في الوصول للكاميرا';
-                barcodeScanner.classList.remove('scanning');
-                
-                // إعادة عرض طلب الإذن في حالة الخطأ
-                setTimeout(() => {
-                    cameraPermission.classList.remove('hidden');
-                    scanStatus.textContent = 'انقر للموافقة على استخدام الكاميرا';
-                }, 3000);
+                console.error('خطأ في تشغيل الكاميرا:', err);
+                infoMessage.textContent = 'خطأ في تشغيل الكاميرا - تأكد من منح الإذن';
+                infoMessage.className = 'message error';
             }
         }
 
-        // بدء عملية مسح الباركود
+        // إيقاف الكاميرا
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            cameraOverlay.style.display = 'flex';
+            startCameraBtn.style.display = 'flex';
+            stopCameraBtn.style.display = 'none';
+            isScanning = false;
+            infoMessage.textContent = 'قم بتوجيه كاميرا الهاتف نحو باركود الهوية';
+            infoMessage.className = 'message info';
+        }
+
+        // بدء مسح الباركود
         function startBarcodeScanning() {
+            // محاكاة مسح الباركود (في التطبيق الحقيقي سيتم استخدام Quagga.js)
             const scanInterval = setInterval(() => {
                 if (!isScanning) {
                     clearInterval(scanInterval);
                     return;
                 }
                 
-                scanAttempts++;
-                
-                // محاكاة نجاح المسح بعد عدة محاولات
-                if (scanAttempts >= 3 && scanAttempts <= maxScanAttempts) {
-                    // فرصة 30% لاكتشاف الباركود في كل محاولة
-                    if (Math.random() < 0.3) {
-                        simulateBarcodeDetected();
-                        clearInterval(scanInterval);
-                        return;
-                    }
+                // محاكاة اكتشاف باركود بعد 2-5 ثواني
+                if (Math.random() < 0.1) { // 10% فرصة لاكتشاف باركود في كل ثانية
+                    simulateBarcodeDetected();
+                    clearInterval(scanInterval);
                 }
-                
-                // إذا تجاوزت الحد الأقصى للمحاولات، إعادة المحاولة
-                if (scanAttempts > maxScanAttempts) {
-                    scanAttempts = 0;
-                    scanStatus.textContent = 'جاري إعادة المسح - تأكد من إضاءة الباركود';
-                }
-                
             }, 1000);
         }
 
         // محاكاة اكتشاف الباركود
         function simulateBarcodeDetected() {
-            const barcodes = Object.keys(employeeData);
+            const barcodes = Object.keys(employees);
             const randomBarcode = barcodes[Math.floor(Math.random() * barcodes.length)];
-            const employee = employeeData[randomBarcode];
+            const employee = employees[randomBarcode];
             
-            // إظهار رسالة الاكتشاف
-            scanStatus.textContent = `تم اكتشاف الباركود: ${employee.name}`;
-            barcodeScanner.style.borderColor = "#28a745";
-            barcodeScanner.style.background = "#d4edda";
+            infoMessage.textContent = `تم اكتشاف باركود: ${employee.name}`;
+            infoMessage.className = 'message success';
             
-            // تسجيل الحضور
+            // عرض بيانات الموظف
             setTimeout(() => {
-                registerAttendance(employee);
-                
-                // العودة للحالة الطبيعية بعد التسجيل
-                setTimeout(() => {
-                    barcodeScanner.style.borderColor = "";
-                    barcodeScanner.style.background = "";
-                    scanStatus.textContent = 'جاهز للمسح - ضع الباركود التالي';
-                    scanAttempts = 0;
-                    startBarcodeScanning();
-                }, 2000);
+                displayEmployeeInfo(employee);
+                stopCamera();
             }, 1000);
         }
+
+        // عرض بيانات الموظف
+        function displayEmployeeInfo(employee) {
+            currentEmployee = employee;
+            employeePhoto.innerHTML = employee.photo;
+            employeeName.textContent = employee.name;
+            employeePosition.textContent = employee.position;
+            employeeId.textContent = employee.id;
+            employeeMobile.textContent = employee.mobile;
+            employeeDepartment.textContent = employee.department;
+            employeeCard.classList.add('active');
+        }
+
+        // إلغاء العملية
+        cancelBtn.addEventListener('click', function() {
+            employeeCard.classList.remove('active');
+            currentEmployee = null;
+            startCamera();
+        });
+
+        // تأكيد تسجيل الحضور
+        confirmBtn.addEventListener('click', function() {
+            if (currentEmployee) {
+                registerAttendance(currentEmployee);
+            }
+        });
 
         // تسجيل الحضور
         function registerAttendance(employee) {
@@ -472,7 +878,11 @@
             // حفظ في localStorage
             const record = {
                 name: employee.name,
+                position: employee.position,
                 department: employee.department,
+                id: employee.id,
+                mobile: employee.mobile,
+                photo: employee.photo,
                 time: time,
                 date: date,
                 timestamp: now.getTime()
@@ -482,11 +892,21 @@
             records.unshift(record);
             localStorage.setItem('attendanceRecords', JSON.stringify(records));
             
-            // تحديث واجهة المسؤول إذا كانت مفتوحة
+            // عرض رسالة النجاح
+            infoMessage.textContent = `✓ تم تسجيل حضور ${employee.name} بنجاح`;
+            infoMessage.className = 'message success';
+            
+            // إخفاء بطاقة الموظف
+            employeeCard.classList.remove('active');
+            currentEmployee = null;
+            
+            // تحديث لوحة التحكم
             updateAdminPanel();
             
-            // إظهار رسالة نجاح
-            scanStatus.textContent = `✓ تم تسجيل حضور ${employee.name}`;
+            // العودة للكاميرا بعد 3 ثواني
+            setTimeout(() => {
+                startCamera();
+            }, 3000);
         }
 
         // تحديث لوحة التحكم
@@ -494,10 +914,12 @@
             const records = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
             attendanceRecords.innerHTML = '';
             
-            records.slice(0, 10).forEach(record => {
+            records.forEach(record => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
+                    <td>${record.photo}</td>
                     <td>${record.name}</td>
+                    <td>${record.id}</td>
                     <td>${record.time}</td>
                     <td>${record.date}</td>
                     <td><span class="status present">حاضر</span></td>
@@ -506,34 +928,50 @@
             });
         }
 
-        // تبديل عرض لوحة التحكم
-        toggleAdminBtn.addEventListener('click', function() {
-            if (adminPanel.classList.contains('active')) {
-                adminPanel.classList.remove('active');
-                toggleAdminBtn.textContent = 'عرض لوحة التحكم';
-            } else {
-                adminPanel.classList.add('active');
-                toggleAdminBtn.textContent = 'إخفاء لوحة التحكم';
-                updateAdminPanel();
-            }
+        // البحث في لوحة التحكم
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = attendanceRecords.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const name = row.cells[1].textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         });
 
-        // إضافة بعض السجلات الافتراضية عند التحميل الأول
+        // إضافة سجلات نموذجية عند التحميل
         window.addEventListener('DOMContentLoaded', function() {
             if (!localStorage.getItem('attendanceRecords')) {
                 const sampleRecords = [
-                    { name: "أحمد محمد", department: "الإدارة", time: "08:15", date: "2024-11-16", timestamp: new Date().getTime() - 2*60*60*1000 },
-                    { name: "فاطمة علي", department: "الشؤون الإدارية", time: "08:20", date: "2024-11-16", timestamp: new Date().getTime() - 1.5*60*60*1000 },
-                    { name: "خالد إبراهيم", department: "تقنية المعلومات", time: "08:25", date: "2024-11-16", timestamp: new Date().getTime() - 1*60*60*1000 }
+                    { 
+                        name: "مهند مرغني", 
+                        position: "مشرف التسجيل",
+                        department: "الإدارة",
+                        id: "106",
+                        mobile: "+966 50 753 9702",
+                        photo: "👨‍💼",
+                        time: "08:15", 
+                        date: "2024-11-16", 
+                        timestamp: new Date().getTime() - 2*60*60*1000 
+                    }
                 ];
                 localStorage.setItem('attendanceRecords', JSON.stringify(sampleRecords));
             }
+            
+            // بدء الكاميرا تلقائياً بعد تحميل الصفحة
+            setTimeout(() => {
+                startCamera();
+            }, 1000);
         });
 
-        // إعادة تشغيل الكاميرا عند النقر على منطقة البصمة
-        barcodeScanner.addEventListener('click', async function() {
-            if (!isScanning) {
-                await startCamera();
+        // منع الإغلاق عند النقر خارج لوحة التحكم
+        adminPanel.addEventListener('click', function(e) {
+            if (e.target === adminPanel) {
+                adminPanel.classList.remove('active');
             }
         });
     </script>
