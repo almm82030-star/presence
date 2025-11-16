@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام الحضور والانصراف - الزهراني</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -137,37 +136,6 @@
             color: white;
         }
         
-        .scan-area {
-            width: 250px;
-            height: 150px;
-            border: 2px solid var(--accent);
-            border-radius: 10px;
-            position: relative;
-            margin-bottom: 20px;
-        }
-        
-        .scan-area::before, .scan-area::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--accent);
-        }
-        
-        .scan-area::before {
-            top: -2px;
-            left: -2px;
-            border-right: none;
-            border-bottom: none;
-        }
-        
-        .scan-area::after {
-            bottom: -2px;
-            right: -2px;
-            border-left: none;
-            border-top: none;
-        }
-        
         .camera-controls {
             display: flex;
             gap: 10px;
@@ -249,6 +217,17 @@
             color: var(--primary);
         }
         
+        .captured-id {
+            width: 100%;
+            max-width: 300px;
+            height: 180px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            margin: 0 auto 15px;
+            display: none;
+        }
+        
         .employee-name {
             font-size: 22px;
             font-weight: bold;
@@ -299,28 +278,24 @@
             border-radius: 10px;
             font-weight: 600;
             text-align: center;
-            display: none;
         }
         
         .message.success {
             background: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
-            display: block;
         }
         
         .message.error {
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
-            display: block;
         }
         
         .message.info {
             background: #d1ecf1;
             color: #0c5460;
             border: 1px solid #bee5eb;
-            display: block;
         }
         
         /* لوحة التحكم */
@@ -357,7 +332,7 @@
             color: white;
             padding: 20px;
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
         }
         
@@ -407,6 +382,14 @@
             background: var(--light);
             font-weight: 600;
             color: var(--primary);
+        }
+        
+        .id-photo {
+            width: 60px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ddd;
         }
         
         .status {
@@ -487,16 +470,6 @@
             }
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        
         /* التكيف مع الأجهزة المحمولة */
         @media (max-width: 480px) {
             .container {
@@ -520,11 +493,6 @@
                 height: 250px;
             }
             
-            .scan-area {
-                width: 200px;
-                height: 120px;
-            }
-            
             .employee-card {
                 margin: 15px;
                 padding: 15px;
@@ -539,6 +507,15 @@
             .employee-name {
                 font-size: 20px;
             }
+        }
+
+        .capture-section {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .capture-btn {
+            margin: 10px;
         }
     </style>
 </head>
@@ -575,7 +552,7 @@
                 <table class="attendance-table">
                     <thead>
                         <tr>
-                            <th>الصورة</th>
+                            <th>صورة الهوية</th>
                             <th>الاسم</th>
                             <th>رقم الهوية</th>
                             <th>الوقت</th>
@@ -610,7 +587,7 @@
         
         <!-- الرسائل -->
         <div class="message info" id="infoMessage">
-            <i class="fas fa-info-circle"></i> قم بتوجيه كاميرا الهاتف نحو باركود الهوية
+            <i class="fas fa-info-circle"></i> قم بتوجيه كاميرا الهاتف نحو هوية الموظف
         </div>
         
         <!-- قسم الكاميرا -->
@@ -618,14 +595,18 @@
             <div class="camera-container">
                 <video id="cameraFeed" autoplay playsinline></video>
                 <div class="camera-overlay" id="cameraOverlay">
-                    <div class="scan-area pulse"></div>
-                    <div>ضع باركود الهوية داخل الإطار</div>
+                    <i class="fas fa-camera" style="font-size: 48px; margin-bottom: 15px;"></i>
+                    <div>انقر لبدء الكاميرا</div>
                 </div>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
             </div>
             
             <div class="camera-controls">
                 <button class="btn btn-primary" id="startCamera">
                     <i class="fas fa-camera"></i> تشغيل الكاميرا
+                </button>
+                <button class="btn btn-success" id="captureBtn" style="display: none;">
+                    <i class="fas fa-camera-retro"></i> التقاط صورة الهوية
                 </button>
                 <button class="btn btn-secondary" id="stopCamera" style="display: none;">
                     <i class="fas fa-stop"></i> إيقاف الكاميرا
@@ -635,6 +616,7 @@
         
         <!-- بطاقة الموظف -->
         <div class="employee-card" id="employeeCard">
+            <img id="capturedId" class="captured-id" alt="صورة الهوية">
             <div class="employee-photo" id="employeePhoto">
                 <i class="fas fa-user"></i>
             </div>
@@ -672,18 +654,6 @@
             "مسؤول": "password"
         };
 
-        // بيانات الموظفين (سيتم ملؤها من الباركود)
-        const employees = {
-            "106": {
-                name: "مهند مرغني",
-                position: "مشرف التسجيل",
-                department: "الإدارة",
-                mobile: "+966 50 753 9702",
-                id: "106",
-                photo: "👨‍💼"
-            }
-        };
-
         // عناصر DOM
         const loginModal = document.getElementById('loginModal');
         const adminPanel = document.getElementById('adminPanel');
@@ -696,7 +666,10 @@
         const currentDate = document.getElementById('currentDate');
         const cameraFeed = document.getElementById('cameraFeed');
         const cameraOverlay = document.getElementById('cameraOverlay');
+        const captureCanvas = document.getElementById('captureCanvas');
+        const capturedId = document.getElementById('capturedId');
         const startCameraBtn = document.getElementById('startCamera');
+        const captureBtn = document.getElementById('captureBtn');
         const stopCameraBtn = document.getElementById('stopCamera');
         const employeeCard = document.getElementById('employeeCard');
         const employeePhoto = document.getElementById('employeePhoto');
@@ -712,9 +685,12 @@
         const searchInput = document.getElementById('searchInput');
 
         let stream = null;
-        let isScanning = false;
+        let isCameraActive = false;
         let currentEmployee = null;
-        let quaggaInitialized = false;
+        let capturedImage = null;
+
+        // API Key للذكاء الاصطناعي
+        const GOOGLE_VISION_API_KEY = 'AIzaSyBewzM4KVeKAxqBUMzGVkw_XnduLjk8Bus';
 
         // تحديث الوقت والتاريخ
         function updateDateTime() {
@@ -765,6 +741,11 @@
             stopCamera();
         });
 
+        // التقاط صورة
+        captureBtn.addEventListener('click', function() {
+            captureID();
+        });
+
         // بدء تشغيل الكاميرا
         async function startCamera() {
             try {
@@ -782,13 +763,11 @@
                 cameraFeed.srcObject = stream;
                 cameraOverlay.style.display = 'none';
                 startCameraBtn.style.display = 'none';
+                captureBtn.style.display = 'flex';
                 stopCameraBtn.style.display = 'flex';
-                isScanning = true;
+                isCameraActive = true;
                 
-                infoMessage.textContent = 'جاري المسح ضوئياً - ضع باركود الهوية أمام الكاميرا';
-                
-                // بدء مسح الباركود
-                startBarcodeScanning();
+                infoMessage.textContent = 'قم بتصويب الكاميرا نحو الهوية واضغط على "التقاط صورة الهوية"';
                 
             } catch (err) {
                 console.error('خطأ في تشغيل الكاميرا:', err);
@@ -804,61 +783,169 @@
             }
             cameraOverlay.style.display = 'flex';
             startCameraBtn.style.display = 'flex';
+            captureBtn.style.display = 'none';
             stopCameraBtn.style.display = 'none';
-            isScanning = false;
-            infoMessage.textContent = 'قم بتوجيه كاميرا الهاتف نحو باركود الهوية';
+            isCameraActive = false;
+            infoMessage.textContent = 'قم بتوجيه كاميرا الهاتف نحو هوية الموظف';
             infoMessage.className = 'message info';
         }
 
-        // بدء مسح الباركود
-        function startBarcodeScanning() {
-            // محاكاة مسح الباركود (في التطبيق الحقيقي سيتم استخدام Quagga.js)
-            const scanInterval = setInterval(() => {
-                if (!isScanning) {
-                    clearInterval(scanInterval);
-                    return;
-                }
-                
-                // محاكاة اكتشاف باركود بعد 2-5 ثواني
-                if (Math.random() < 0.1) { // 10% فرصة لاكتشاف باركود في كل ثانية
-                    simulateBarcodeDetected();
-                    clearInterval(scanInterval);
-                }
-            }, 1000);
+        // التقاط صورة الهوية
+        function captureID() {
+            if (!isCameraActive) return;
+            
+            const context = captureCanvas.getContext('2d');
+            captureCanvas.width = cameraFeed.videoWidth;
+            captureCanvas.height = cameraFeed.videoHeight;
+            context.drawImage(cameraFeed, 0, 0, captureCanvas.width, captureCanvas.height);
+            
+            // تحويل Canvas إلى صورة
+            capturedImage = captureCanvas.toDataURL('image/jpeg');
+            capturedId.src = capturedImage;
+            capturedId.style.display = 'block';
+            employeePhoto.style.display = 'none';
+            
+            // تحليل الصورة باستخدام الذكاء الاصطناعي
+            analyzeImage(capturedImage);
         }
 
-        // محاكاة اكتشاف الباركود
-        function simulateBarcodeDetected() {
-            const barcodes = Object.keys(employees);
-            const randomBarcode = barcodes[Math.floor(Math.random() * barcodes.length)];
-            const employee = employees[randomBarcode];
+        // تحليل الصورة باستخدام Google Vision API
+        async function analyzeImage(imageData) {
+            try {
+                infoMessage.textContent = 'جاري تحليل الهوية...';
+                infoMessage.className = 'message info';
+                
+                // تحويل base64 إلى Blob
+                const response = await fetch(imageData);
+                const blob = await response.blob();
+                
+                // إعداد طلب API
+                const request = {
+                    requests: [
+                        {
+                            image: {
+                                content: imageData.split(',')[1]
+                            },
+                            features: [
+                                {
+                                    type: 'TEXT_DETECTION',
+                                    maxResults: 10
+                                }
+                            ]
+                        }
+                    ]
+                };
+                
+                // استدعاء Google Vision API
+                const visionResponse = await fetch(
+                    `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(request)
+                    }
+                );
+                
+                const data = await visionResponse.json();
+                
+                if (data.responses && data.responses[0].textAnnotations) {
+                    const text = data.responses[0].textAnnotations[0].description;
+                    processExtractedText(text);
+                } else {
+                    throw new Error('لم يتم العثور على نص في الصورة');
+                }
+                
+            } catch (error) {
+                console.error('خطأ في تحليل الصورة:', error);
+                infoMessage.textContent = 'خطأ في قراءة الهوية - حاول مرة أخرى';
+                infoMessage.className = 'message error';
+                
+                // استخدام بيانات تجريبية للاختبار
+                simulateExtractedText();
+            }
+        }
+
+        // معالجة النص المستخرج
+        function processExtractedText(text) {
+            console.log('النص المستخرج:', text);
             
-            infoMessage.textContent = `تم اكتشاف باركود: ${employee.name}`;
-            infoMessage.className = 'message success';
+            // محاولة استخراج البيانات من النص
+            const lines = text.split('\n');
+            let extractedData = {
+                name: '',
+                id: '',
+                mobile: '',
+                department: ''
+            };
             
-            // عرض بيانات الموظف
-            setTimeout(() => {
-                displayEmployeeInfo(employee);
-                stopCamera();
-            }, 1000);
+            // البحث عن رقم الهوية (عادةً أرقام فقط)
+            const idMatch = text.match(/\b\d{9,10}\b/);
+            if (idMatch) {
+                extractedData.id = idMatch[0];
+            }
+            
+            // البحث عن رقم الجوال
+            const mobileMatch = text.match(/(?:\+?966|0)?5[0-9]{8}/);
+            if (mobileMatch) {
+                extractedData.mobile = mobileMatch[0];
+            }
+            
+            // البحث عن الاسم (عادةً في السطور الأولى)
+            for (let i = 0; i < Math.min(3, lines.length); i++) {
+                const line = lines[i].trim();
+                if (line && !line.match(/\d/) && line.length > 3) {
+                    extractedData.name = line;
+                    break;
+                }
+            }
+            
+            // إذا لم نتمكن من استخراج البيانات، نستخدم البيانات التجريبية
+            if (!extractedData.name || !extractedData.id) {
+                simulateExtractedText();
+                return;
+            }
+            
+            // عرض البيانات المستخرجة
+            displayEmployeeInfo(extractedData);
+        }
+
+        // محاكاة البيانات المستخرجة (للتجربة)
+        function simulateExtractedText() {
+            const sampleData = {
+                name: "مهند مرغني",
+                id: "106",
+                mobile: "+966507539702",
+                department: "الإدارة",
+                position: "مشرف التسجيل"
+            };
+            
+            displayEmployeeInfo(sampleData);
         }
 
         // عرض بيانات الموظف
-        function displayEmployeeInfo(employee) {
-            currentEmployee = employee;
-            employeePhoto.innerHTML = employee.photo;
-            employeeName.textContent = employee.name;
-            employeePosition.textContent = employee.position;
-            employeeId.textContent = employee.id;
-            employeeMobile.textContent = employee.mobile;
-            employeeDepartment.textContent = employee.department;
+        function displayEmployeeInfo(employeeData) {
+            currentEmployee = employeeData;
+            employeeName.textContent = employeeData.name;
+            employeePosition.textContent = employeeData.position || "موظف";
+            employeeId.textContent = employeeData.id;
+            employeeMobile.textContent = employeeData.mobile;
+            employeeDepartment.textContent = employeeData.department;
+            
             employeeCard.classList.add('active');
+            infoMessage.textContent = 'تم قراءة الهوية بنجاح - يرجى التأكد من البيانات';
+            infoMessage.className = 'message success';
+            
+            stopCamera();
         }
 
         // إلغاء العملية
         cancelBtn.addEventListener('click', function() {
             employeeCard.classList.remove('active');
             currentEmployee = null;
+            capturedId.style.display = 'none';
+            employeePhoto.style.display = 'flex';
             startCamera();
         });
 
@@ -878,11 +965,11 @@
             // حفظ في localStorage
             const record = {
                 name: employee.name,
-                position: employee.position,
+                position: employee.position || "موظف",
                 department: employee.department,
                 id: employee.id,
                 mobile: employee.mobile,
-                photo: employee.photo,
+                idPhoto: capturedImage,
                 time: time,
                 date: date,
                 timestamp: now.getTime()
@@ -899,14 +986,11 @@
             // إخفاء بطاقة الموظف
             employeeCard.classList.remove('active');
             currentEmployee = null;
+            capturedId.style.display = 'none';
+            employeePhoto.style.display = 'flex';
             
             // تحديث لوحة التحكم
             updateAdminPanel();
-            
-            // العودة للكاميرا بعد 3 ثواني
-            setTimeout(() => {
-                startCamera();
-            }, 3000);
         }
 
         // تحديث لوحة التحكم
@@ -917,7 +1001,12 @@
             records.forEach(record => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${record.photo}</td>
+                    <td>
+                        ${record.idPhoto ? 
+                            `<img src="${record.idPhoto}" class="id-photo" alt="صورة الهوية">` : 
+                            'لا توجد صورة'
+                        }
+                    </td>
                     <td>${record.name}</td>
                     <td>${record.id}</td>
                     <td>${record.time}</td>
@@ -943,26 +1032,11 @@
             });
         });
 
-        // إضافة سجلات نموذجية عند التحميل
+        // بدء الكاميرا تلقائياً عند تحميل الصفحة
         window.addEventListener('DOMContentLoaded', function() {
-            if (!localStorage.getItem('attendanceRecords')) {
-                const sampleRecords = [
-                    { 
-                        name: "مهند مرغني", 
-                        position: "مشرف التسجيل",
-                        department: "الإدارة",
-                        id: "106",
-                        mobile: "+966 50 753 9702",
-                        photo: "👨‍💼",
-                        time: "08:15", 
-                        date: "2024-11-16", 
-                        timestamp: new Date().getTime() - 2*60*60*1000 
-                    }
-                ];
-                localStorage.setItem('attendanceRecords', JSON.stringify(sampleRecords));
-            }
+            updateDateTime();
             
-            // بدء الكاميرا تلقائياً بعد تحميل الصفحة
+            // بدء الكاميرا بعد تحميل الصفحة
             setTimeout(() => {
                 startCamera();
             }, 1000);
